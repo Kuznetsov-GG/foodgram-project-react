@@ -5,16 +5,16 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from recipes.models import (Favorite, Ingredient, IngredientAmount, Recipe,
-                            ShoppingCart, Subscription, Tag)
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from users.models import User
 
+from recipes.models import (Favorite, Ingredient, IngredientAmount, Recipe,
+                            ShoppingCart, Subscription, Tag)
+from users.models import User
 from .filters import RecipeFilter, SearchIngredientFilter
 from .mixins import BaseFavoriteCartViewSetMixin
 from .serializers import (FavoriteSerializer, IngredientSerializer,
@@ -39,10 +39,22 @@ class SubscribeViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         user_id = self.kwargs.get('users_id')
-        user = get_object_or_404(User, id=user_id)
-        Subscription.objects.create(
-            user=request.user, following=user)
-        return Response(HTTPStatus.CREATED)
+        user = request.user
+        author = get_object_or_404(User, id=user_id)
+        if user == author:
+            return Response(
+                'Нельзя подписаться на себя',
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if Subscription.objects.filter(user=user, author=author).exists():
+            return Response(
+                'Такая подписка уже существует',
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        follow = Subscription.objects.create(user=user, author=author)
+        serializer = SubscriptionSerializer(
+            follow.author, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, *args, **kwargs):
         author_id = self.kwargs['users_id']

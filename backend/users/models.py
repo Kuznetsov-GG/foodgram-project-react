@@ -3,6 +3,7 @@ from django.db import models
 
 
 class User(AbstractUser):
+    """Создание модели пользователя."""
     email = models.EmailField(
         db_index=True,
         unique=True,
@@ -31,8 +32,10 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'password']
 
     class Meta:
+        """Параметры модели."""
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
     def __str__(self):
+        """Метод строкового представления модели."""
         return self.username

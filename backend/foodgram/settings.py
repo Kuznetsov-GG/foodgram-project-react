@@ -8,7 +8,6 @@ load_dotenv()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = str(os.getenv('SECRET_KEY'))
-#SECRET_KEY = 'django-insecure-x2ob43sl6jr)jbzhl08bn=dxmx5#+^t+zn+s5r=pc_wtux0pk6'
 
 DEBUG = strtobool(os.getenv('DEBUG', default='False'))
 
@@ -62,14 +61,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
 
-""" DATABASES = {
+DATABASES = {
     'default': {
         'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.postgresql'),
         'NAME': os.getenv('DB_NAME'),
@@ -78,7 +71,7 @@ DATABASES = {
         'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT')
     }
-} """
+}
 
 
 AUTH_PASSWORD_VALIDATORS = [
