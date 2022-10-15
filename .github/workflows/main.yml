@@ -11,7 +11,6 @@ jobs:
   build_and_push_to_docker_hub_backend:
     name: Push Docker image backend to Docker Hub
     runs-on: ubuntu-latest
-    needs: tests
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2 
@@ -27,7 +26,7 @@ jobs:
         with:
           context: backend
           push: true
-          tags: grishik/foodgram:latest
+          tags: grishik:latest
 
   deploy:
     runs-on: ubuntu-latest
