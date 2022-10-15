@@ -9,7 +9,7 @@ services:
         - ./.env
 
   backend:
-    image: grishik:latest
+    image: grishik/foodgram:latest
     restart: always
     volumes:
       - static_value:/app/backend_static/
@@ -20,7 +20,7 @@ services:
       - ./.env
 
   frontend:
-    image: grishik:latest
+    image: grishik/foodgram:latest
     volumes:
       - ../frontend/:/app/result_build/  
   

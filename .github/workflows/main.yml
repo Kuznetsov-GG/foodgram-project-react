@@ -26,7 +26,7 @@ jobs:
         with:
           context: backend
           push: true
-          tags: grishik:latest
+          tags: grishik/foodgram:latest
 
   deploy:
     runs-on: ubuntu-latest
