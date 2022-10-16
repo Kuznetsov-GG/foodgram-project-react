@@ -23,7 +23,7 @@ services:
   frontend:
     image: grishik/foodgram_front:latest
     volumes:
-      - ../frontend/:/app/result_build/  
+      - ../frontend/:/app/result_build/
   
   nginx:
     image: nginx:1.19.3
