@@ -21,7 +21,7 @@ services:
       - ./.env
 
   frontend:
-    image: grishik/foodgram:latest
+    image: grishik/foodgram_front:latest
     volumes:
       - ../frontend/:/app/result_build/  
   
