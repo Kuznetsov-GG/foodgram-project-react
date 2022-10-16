@@ -26,11 +26,11 @@ services:
       - ../frontend/:/app/result_build/  
   
   nginx:
-    image: nginx:1.19.3-alpine
+    image: nginx:1.19.3
     ports:
       - "80:80"
     volumes:
-      - ./infra/nginx.conf:/etc/nginx/conf.d/nginx.conf
+      - ./nginx.conf:/etc/nginx/conf.d/nginx.conf
       - static_value:/app/backend_static/
       - media_value:/app/backend_media/
       - ../frontend/build:/usr/share/nginx/html/
