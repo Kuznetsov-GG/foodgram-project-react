@@ -1,11 +1,14 @@
-from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
+from recipes.models import (
+    Ingredient, IngredientAmount, Recipe, Tag, TagRecipe,
+)
+from .mixins import (
+    CommonSubscribedMixin, CommonRecipeMixin, CommonCountMixin,
+)
 from users.models import User
-from recipes.models import Ingredient, IngredientAmount, Recipe, Tag, TagRecipe
-from .mixins import CommonCountMixin, CommonRecipeMixin, CommonSubscribedMixin
 
 
 class RegistrationSerializer(UserCreateSerializer, CommonSubscribedMixin):
@@ -121,32 +124,39 @@ class RecipeSerializerPost(serializers.ModelSerializer,
 
     def validate_ingredients(self, ingredients):
         """Метод валидации продуктов в рецепте."""
-        ingredients_list = []
+        ingredients = self.initial_data.get('ingredients')
+        ingredients_set = set()
+        if not ingredients:
+            raise serializers.ValidationError(
+                'Необходимо добавить минимум один ингредиент')
         for ingredient in ingredients:
-            id_to_check = ingredient.get('id')
-            ingredient_to_check = get_object_or_404(Ingredient, id=id_to_check)
-            if int(ingredient['amount']) <= 0:
+            if int(ingredient['amount']) < 0:
                 raise serializers.ValidationError(
                     'Количество ингредиента должно быть больше 0')
-            if ingredient_to_check in ingredients_list:
+            ingredient_id = ingredient.get('id')
+            if ingredient_id in ingredients_set:
                 raise serializers.ValidationError(
-                    'Данные ингредиенты повторяются в рецепте!')
-            ingredients_list.append(ingredient_to_check)
+                    'Ингредиент в списке должен быть уникальным.'
+                )
+            ingredients_set.add(ingredient_id)
         return ingredients
 
-    def validate_tags(self, value):
-        """Метод проверки на повтояемость существующих тегов в БД."""
-        tag_list = []
-        for tag in value:
-            tag_to_check = Tag.objects.filter(id=tag['id'])
-            if not tag_to_check.exists():
-                raise serializers.ValidationError('Нет такого тэга!')
-            if tag_to_check in tag_list:
-                raise serializers.ValidationError('Уже есть такие тэги!')
-            tag_list.append(tag_to_check)
-        return value
+    def validate_tags(self, ingredients):
+        """Метод валидации тегов в рецепте."""
+        tags_set = set()
+        if not ingredients:
+            raise serializers.ValidationError(
+                'Добавьте хотя бы один тэг')
+        for tag in ingredients:
+            if tag in tags_set:
+                raise serializers.ValidationError(
+                    'Ингредиент в списке должен быть уникальным.'
+                )
+            tags_set.add(tag)
+        return ingredients
 
-    def add_tags_and_ingredients(self, tags_data, ingredients, recipe):
+    @staticmethod
+    def __add_tags_and_ingredients(tags_data, ingredients, recipe):
         """Метод добавления тегов и ингридиентов."""
         for tag_data in tags_data:
             recipe.tags.add(tag_data)
@@ -154,7 +164,7 @@ class RecipeSerializerPost(serializers.ModelSerializer,
         for ingredient in ingredients:
             new_ingredient = IngredientAmount(
                 recipe=recipe,
-                id_to_check=ingredient.get('id'),
+                ingredient_id=ingredient.get('id'),
                 amount=ingredient['amount']
                 )
             ingredient_list.append(new_ingredient)
@@ -166,7 +176,7 @@ class RecipeSerializerPost(serializers.ModelSerializer,
         tags_data = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredientamount')
         recipe = Recipe.objects.create(**validated_data)
-        self.add_tags_and_ingredients(tags_data, ingredients, recipe)
+        self.__add_tags_and_ingredients(tags_data, ingredients, recipe)
         return recipe
 
     def update(self, instance, validated_data):
@@ -175,7 +185,7 @@ class RecipeSerializerPost(serializers.ModelSerializer,
         ingredients = validated_data.pop('ingredientamount')
         TagRecipe.objects.filter(recipe=instance).delete()
         IngredientAmount.objects.filter(recipe=instance).delete()
-        instance = self.add_tags_and_ingredients(
+        instance = self.__add_tags_and_ingredients(
             tags_data, ingredients, instance)
         super().update(instance, validated_data)
         return instance
@@ -183,7 +193,6 @@ class RecipeSerializerPost(serializers.ModelSerializer,
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для краткого отображения сведений о рецепте."""
-
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'cooking_time', 'image')
@@ -206,6 +215,5 @@ class SubscriptionSerializer(serializers.ModelSerializer,
         queryset = Recipe.objects.filter(author__id=obj.id).order_by('id')
         if request.GET.get('recipes_limit'):
             recipes_limit = int(request.GET.get('recipes_limit'))
-            queryset = Recipe.objects.filter(author__id=obj.id).order_by('id')[
-                :recipes_limit]
+            queryset = queryset[:recipes_limit]
         return ShortRecipeSerializer(queryset, many=True).data

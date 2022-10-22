@@ -38,8 +38,7 @@ class Tag(models.Model):
             RegexValidator(
                 regex='^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$',
                 message='Введенное значение не является цветом в формате HEX!'
-            )
-        ]
+            )]
     )
     slug = models.SlugField('Уникальный слаг', unique=True, max_length=50)
 
@@ -59,7 +58,8 @@ class Recipe(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='recipes',
-        verbose_name='Автор'
+        verbose_name='Автор',
+        help_text='Выберите автора рецепта'
     )
     name = models.CharField(
         max_length=200,
@@ -74,7 +74,7 @@ class Recipe(models.Model):
     text = models.TextField(
         verbose_name='Описание рецепта',
         help_text='Введите описания рецепта',
-        validators=[MaxValueValidator(256)])
+        max_length=1000)
     ingredients = models.ManyToManyField(
         Ingredient,
         through='IngredientAmount',
@@ -85,12 +85,11 @@ class Recipe(models.Model):
         Tag,
         through='TagRecipe',
         verbose_name='Теги рецептов',
-        help_text='Выберите тег рецепта')
+        help_text='Выберите теги рецепта')
     cooking_time = models.PositiveSmallIntegerField(
         validators=[
-            MinValueValidator(1, message='Минимальное значение 1!'),
-            MaxValueValidator(600, message='Максимальное значение 600!')
-        ],
+            MinValueValidator(1, 'Значение не может быть меньше 1'),
+            MaxValueValidator(300, 'Значение не может быть больше 300')],
         verbose_name='Время приготовления',
         help_text='Введите время приготовления'
     )
@@ -139,37 +138,6 @@ class ShoppingCart(models.Model):
         return f'{self.user} {self.recipe}'
 
 
-class Subscription(models.Model):
-    """Создание модели подписок."""
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='follower',
-        verbose_name='Пользователь',
-        help_text='Выберите пользователя, который подписывается'
-    )
-    following = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='following',
-        verbose_name='Автор',
-        help_text='Выберите автора, на которого подписываются'
-    )
-
-    class Meta:
-        """Параметры модели."""
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'following'],
-                                    name='unique_subscribe')
-        ]
-
-    def __str__(self):
-        """Метод строкового представления модели."""
-        return f'{self.user} {self.following}'
-
-
 class IngredientAmount(models.Model):
     """Создание модели продуктов в рецепте."""
     ingredient = models.ForeignKey(
@@ -187,11 +155,9 @@ class IngredientAmount(models.Model):
     )
     amount = models.PositiveSmallIntegerField(
         default=1,
-        validators=[
-            MinValueValidator(0.1),
-            MaxValueValidator(10000)
-            ],
-        verbose_name='Количество ингредиента',
+        validators=[MinValueValidator(1),
+                    MaxValueValidator(1000)],
+        verbose_name='Количество ингредиентов',
         help_text='Введите количество ингредиента'
     )
 
