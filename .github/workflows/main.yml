@@ -53,11 +53,11 @@ jobs:
             echo DB_HOST=${{ secrets.DB_HOST }} >> .env
             echo DB_PORT=${{ secrets.DB_PORT }} >> .env
             sudo docker-compose up -d --build
-            sudo docker-compose exec backend python manage.py makemigrations
-            sudo docker-compose exec backend python manage.py migrate
-            sudo docker-compose exec backend python manage.py add_igridiensts_db
-            sudo docker-compose exec backend python manage.py add_tags_db
-            sudo docker-compose exec backend python manage.py collectstatic --noinput
+            sudo docker-compose exec -T backend python manage.py makemigrations
+            sudo docker-compose exec -T backend python manage.py migrate
+            sudo docker-compose exec -T backend python manage.py add_igridiensts_db
+            sudo docker-compose exec -T backend python manage.py add_tags_db
+            sudo docker-compose exec -T backend python manage.py collectstatic --noinput
  
   send_message:
     runs-on: ubuntu-latest
