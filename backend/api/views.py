@@ -42,22 +42,10 @@ class SubscribeViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         """ Метод создания подписки."""
         user_id = self.kwargs.get('users_id')
-        user = request.user
-        author = get_object_or_404(User, id=user_id)
-        if user == author:
-            return Response(
-                'Нельзя подписаться на себя',
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        if Subscription.objects.filter(user=user, author=author).exists():
-            return Response(
-                'Такая подписка уже существует',
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        follow = Subscription.objects.create(user=user, author=author)
-        serializer = SubscriptionSerializer(
-            follow.author, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        user = get_object_or_404(User, id=user_id)
+        Subscription.objects.create(
+            user=request.user, following=user)
+        return Response(HTTPStatus.CREATED)
 
     def delete(self, request, *args, **kwargs):
         """ Метод удаления подписки."""
