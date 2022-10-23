@@ -55,18 +55,12 @@ class Subscription(models.Model):
                                )
 
     class Meta:
-        constraints = [
-            models.CheckConstraint(
-                check=~models.Q(
-                    user=models.F('author')
-                ), name='user=author'),
-            models.UniqueConstraint(
-                fields=['user', 'author'],
-                name='users follow on uniq authors'
-            )
-        ]
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'following'],
+                                    name='unique_subscribe')
+        ]
 
     def __str__(self):
         """Метод строкового представления модели."""
