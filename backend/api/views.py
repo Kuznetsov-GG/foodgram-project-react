@@ -21,6 +21,7 @@ from .serializers import (
     RecipeSerializerPost, RegistrationSerializer, ShoppingCartSerializer,
     SubscriptionSerializer, TagSerializer,
 )
+from .permissions import IsAuthorOrReadOnly
 
 
 class CreateUserView(UserViewSet):
@@ -60,7 +61,7 @@ class SubscribeViewSet(viewsets.ModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """ Создание рецептов."""
     queryset = Recipe.objects.all()
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthorOrReadOnly]
     filter_class = RecipeFilter
     filter_backends = [DjangoFilterBackend, ]
 

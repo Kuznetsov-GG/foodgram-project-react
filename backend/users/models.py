@@ -42,30 +42,31 @@ class User(AbstractUser):
 
 
 class Subscription(models.Model):
-    """Создание модели подписки."""
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='follower',
-        verbose_name='Пользователь',
-        help_text='Выберите пользователя, который подписывается'
-    )
-    following = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='following',
-        verbose_name='Автор',
-        help_text='Выберите автора, на которого подписываются'
-    )
+    """Модель подписки на авторов"""
+    user = models.ForeignKey(User,
+                             on_delete=models.CASCADE,
+                             related_name='follower',
+                             verbose_name='Пользователь',
+                             )
+    author = models.ForeignKey(User,
+                               on_delete=models.CASCADE,
+                               related_name='following',
+                               verbose_name='Автор',
+                               )
 
     class Meta:
-        """Параметры модели."""
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(
+                    user=models.F('author')
+                ), name='user=author'),
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='users follow on uniq authors'
+            )
+        ]
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'following'],
-                                    name='unique_subscribe')
-        ]
 
     def __str__(self):
         """Метод строкового представления модели."""
