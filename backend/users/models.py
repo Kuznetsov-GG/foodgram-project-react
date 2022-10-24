@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.exceptions import ValidationError
 
 
 class User(AbstractUser):
@@ -42,19 +43,24 @@ class User(AbstractUser):
 
 
 class Subscription(models.Model):
-    """Модель подписки на авторов"""
-    user = models.ForeignKey(User,
-                             on_delete=models.CASCADE,
-                             related_name='follower',
-                             verbose_name='Пользователь',
-                             )
-    author = models.ForeignKey(User,
-                               on_delete=models.CASCADE,
-                               related_name='following',
-                               verbose_name='Автор',
-                               )
+    """Создание модели подписки."""
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='follower',
+        verbose_name='Пользователь',
+        help_text='Выберите пользователя, который подписывается'
+    )
+    following = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='following',
+        verbose_name='Автор',
+        help_text='Выберите автора, на которого подписываются'
+    )
 
     class Meta:
+        """Параметры модели."""
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
         constraints = [
@@ -64,4 +70,17 @@ class Subscription(models.Model):
 
     def __str__(self):
         """Метод строкового представления модели."""
-        return f'{self.user} {self.following}'
+        return f'Подписка: {self.user.username} на {self.following.username}'
+
+    def clean(self):
+        errors = {}
+        if self.user == self.following:
+            errors['following'] = ValidationError(
+                ('Пользователь не может быть подписан на самого себя.')
+            )
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
